@@ -61,6 +61,8 @@ beep = beeper.Beeper()
 sd = None
 i2s = None
 
+is_paused = False
+
 def mount_sd():
     global sd
     try:
@@ -215,7 +217,7 @@ class EasyWavMenu:
             color = self.config.palette[5] if is_selected else self.config.palette[4]
             
             # Apply ping-pong scrolling only to the selected item if it's long
-            if is_selected and len(item) > _CHARS_PER_SCREEN - 2:
+            if is_selected and len(item) > _CHARS_PER_SCREEN:
                 scroll_distance = (len(item) - _CHARS_PER_SCREEN + 1) * 8  # Adjust for 8x8 font
                 x = int(self.ping_pong_ease(current_time, _SCROLL_TIME) * scroll_distance)
                 x = -x  # Reverse direction
@@ -361,7 +363,19 @@ class EasyWavMenu:
 def play_sound(notes, time_ms=30):
     if config['ui_sound']:
         beep.play(notes, time_ms, config['volume'])
+        
 
+def toggle_pause(selected_file):
+    global is_paused
+    is_paused = not is_paused
+    if is_paused:
+        overlay.error("PAUSED")
+    else:
+        # Clear the screen and redraw the play screen
+        tft.fill(config["bg_color"])
+        display_play_screen(selected_file)
+        
+        
 def main_loop():
     mount_sd()
     view = EasyWavMenu(tft, config)
@@ -400,6 +414,14 @@ def main_loop():
                             for key in new_keys:
                                 if key in ("`", "DEL", "ESC", "BKSP"):  # Exit playback
                                     break
+                                if key in ("UP", ";", ":"):
+                                    overlay.error("Implement up volume")
+                                elif key in ("DOWN", ">", "."):
+                                    overlay.error("Implement down volume")
+                                elif key == "ENT":
+                                    toggle_pause(selected_file)
+                                    tft.fill(config["bg_color"])
+                                    display_play_screen(selected_file)
                             else:
                                 # Continue playing if no exit key is pressed
                                 continue
